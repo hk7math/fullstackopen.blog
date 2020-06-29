@@ -1,0 +1,9 @@
+POST http://localhost:3003/api/blogs
+Content-Type: application/json
+
+{
+  "title": "Euler Equation",
+  "author": "Euler",
+  "url": "https://en.wikipedia.org/wiki/Euler%27s_identity",
+  "likes": 0
+}
