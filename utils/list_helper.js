@@ -1,16 +1,13 @@
-const dummy = () => {
-  return 1
-}
+const dummy = () => 1
 
-const totalLikes = (blogs) => {
-  return blogs.reduce((prev, blog) => prev + blog.likes, 0)
-}
+const totalLikes = blogs => 
+  blogs.reduce((prev, blog) => prev + blog.likes, 0)
 
-const favoriteBlog = (blogs) => {
-  return blogs.length === 0
+const favoriteBlog = blogs => 
+  blogs.length === 0
     ? {}
-    : blogs.reduce(
-      (prev, blog) => blog.likes > prev.likes
+    : blogs.reduce((prev, blog) => 
+      blog.likes > prev.likes
         ? {
           title: blog.title, 
           author: blog.author, 
@@ -22,10 +19,33 @@ const favoriteBlog = (blogs) => {
         author: blogs[0].author, 
         likes: blogs[0].likes
       })
+
+const mostBlogs = blogs =>{
+  const blogNum = blogs.reduce((prev, blog) => {
+    if (blog.author in prev) {
+      prev[blog.author]+=1
+    }else{
+      prev[blog.author]=1
+    }
+    return prev
+  }, {})
+  return Object.keys(blogNum)
+    .reduce((prev, author) => 
+      blogNum[author] > prev.blogs
+        ? {
+          author: author,
+          blogs: blogNum[author]
+        }
+        : prev, 
+    {
+      author: '',
+      blogs: 0
+    })
 }
 
 module.exports = {
   dummy,
   totalLikes,
-  favoriteBlog
+  favoriteBlog,
+  mostBlogs,
 }
