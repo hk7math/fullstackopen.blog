@@ -7,24 +7,28 @@ module.exports = {
   },
   'extends': 'eslint:recommended',
   'parserOptions': {
-    'ecmaVersion': 11
+    'ecmaVersion': 11,
   },
   'rules': {
     'indent': [
       'error',
-      2
+      2,
     ],
     'linebreak-style': [
       'error',
-      'windows'
+      'windows',
     ],
     'quotes': [
       'error',
-      'single'
+      'single',
     ],
     'semi': [
       'error',
-      'never'
-    ]
-  }
+      'never',
+    ],
+    'comma-dangle': [
+      'error',
+      'always-multiline',
+    ],
+  },
 }
