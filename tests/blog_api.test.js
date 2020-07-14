@@ -44,10 +44,10 @@ describe('api post a blog', () => {
       .expect(201)
       .expect('Content-Type', /application\/json/)
 
-    const response = await api.get('/api/blogs')
-    const titles = response.body.map(r => r.title)
+    const res = await api.get('/api/blogs')
+    const titles = res.body.map(r => r.title)
 
-    expect(response.body).toHaveLength(helper.initialBlogs.length + 1)
+    expect(res.body).toHaveLength(helper.initialBlogs.length + 1)
     expect(titles).toContain('Go To Statement Considered Harmful')
   })
 
@@ -58,11 +58,23 @@ describe('api post a blog', () => {
       url: 'http://www.u.arizona.edu/~rubinson/copyright_violations/Go_To_Considered_Harmful.html',
     }
 
-    const createdBlog = await api
+    const res = await api
       .post('/api/blogs')
       .send(newBlog)
+      
+    expect(res.body.likes).toBe(0)
+  })
     
-    expect(createdBlog.body.likes).toBe(0)
+  test('400 bad request', async () => {
+    const newBlog = {
+      author: 'Edsger W. Dijkstra',
+      likes: 0,
+    }
+  
+    await api
+      .post('/api/blogs')
+      .send(newBlog)
+      .expect(400)
   })
 })
 
