@@ -15,6 +15,13 @@ beforeEach(async () => {
     .map(blog => new Blog(blog))
   const promiseArray = blogObjects.map(blog => blog.save())
   await Promise.all(promiseArray)
+  
+  await User.deleteMany({})
+
+  const passwordHash = await bcrypt.hash('secret', 10)
+  const user = new User({ username: 'root', passwordHash})
+
+  await user.save()
 })
 
 describe('when there is initially some blogs saved', () => {
@@ -33,6 +40,15 @@ describe('when there is initially some blogs saved', () => {
   
 describe('addition of a new blog', () => {
   test('number of blogs increases by 1', async () => {
+    const loggedInUser = await api
+      .post('/api/login')
+      .send({
+        username: 'root',
+        password: 'secret',
+      })
+      .expect(200)
+    const loggedInToken = loggedInUser.body.token
+
     const newBlog = {
       title: 'Go To Statement Considered Harmful',
       author: 'Edsger W. Dijkstra',
@@ -42,6 +58,7 @@ describe('addition of a new blog', () => {
 
     await api
       .post('/api/blogs')
+      .set('Authorization','bearer '+loggedInToken)
       .send(newBlog)
       .expect(201)
       .expect('Content-Type', /application\/json/)
@@ -54,6 +71,15 @@ describe('addition of a new blog', () => {
   })
 
   test('default 0 like when like is not specified', async () => {
+    const loggedInUser = await api
+      .post('/api/login')
+      .send({
+        username: 'root',
+        password: 'secret',
+      })
+      .expect(200)
+    const loggedInToken = loggedInUser.body.token
+
     const newBlog = {
       title: 'Go To Statement Considered Harmful',
       author: 'Edsger W. Dijkstra',
@@ -62,12 +88,22 @@ describe('addition of a new blog', () => {
 
     const res = await api
       .post('/api/blogs')
+      .set('Authorization', 'bearer '+loggedInToken)
       .send(newBlog)
       
     expect(res.body.likes).toBe(0)
   })
     
   test('fails with status code 400 if data invaild', async () => {
+    const loggedInUser = await api
+      .post('/api/login')
+      .send({
+        username: 'root',
+        password: 'secret',
+      })
+      .expect(200)
+    const loggedInToken = loggedInUser.body.token
+
     const newBlog = {
       author: 'Edsger W. Dijkstra',
       likes: 0,
@@ -75,6 +111,7 @@ describe('addition of a new blog', () => {
   
     await api
       .post('/api/blogs')
+      .set('Authorization', 'bearer '+loggedInToken)
       .send(newBlog)
       .expect(400)
   })
@@ -120,15 +157,6 @@ describe('updating a blog', () => {
 })
 
 describe('when there is initially one user in db', () => {
-  beforeEach(async () => {
-    await User.deleteMany({})
-
-    const passwordHash = await bcrypt.hash('secret', 10)
-    const user = new User({ username: 'root', passwordHash})
-
-    await user.save()
-  })
-
   test('creation succeeds with a fresh username', async () => {
     const usersAtStart = await helper.usersInDb()
 
