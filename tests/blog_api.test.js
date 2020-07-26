@@ -7,21 +7,30 @@ const api = supertest(app)
 
 const Blog = require('../models/blog')
 const User = require('../models/user')
+let loggedInToken
 
 beforeEach(async () => {
+  await User.deleteMany({})
+  const passwordHash = await bcrypt.hash('secret', 10)
+  const user = new User({ username: 'root', passwordHash})
+  const savedUser = await user.save()
+
   await Blog.deleteMany({})
 
   const blogObjects = helper.initialBlogs
+    .map(blog => ({ ...blog, user: savedUser.id }))
     .map(blog => new Blog(blog))
   const promiseArray = blogObjects.map(blog => blog.save())
   await Promise.all(promiseArray)
-  
-  await User.deleteMany({})
 
-  const passwordHash = await bcrypt.hash('secret', 10)
-  const user = new User({ username: 'root', passwordHash})
-
-  await user.save()
+  const loggedInUser = await api
+    .post('/api/login')
+    .send({
+      username: 'root',
+      password: 'secret',
+    })
+    .expect(200)
+  loggedInToken = loggedInUser.body.token
 })
 
 describe('when there is initially some blogs saved', () => {
@@ -40,15 +49,6 @@ describe('when there is initially some blogs saved', () => {
   
 describe('addition of a new blog', () => {
   test('number of blogs increases by 1', async () => {
-    const loggedInUser = await api
-      .post('/api/login')
-      .send({
-        username: 'root',
-        password: 'secret',
-      })
-      .expect(200)
-    const loggedInToken = loggedInUser.body.token
-
     const newBlog = {
       title: 'Go To Statement Considered Harmful',
       author: 'Edsger W. Dijkstra',
@@ -71,15 +71,6 @@ describe('addition of a new blog', () => {
   })
 
   test('default 0 like when like is not specified', async () => {
-    const loggedInUser = await api
-      .post('/api/login')
-      .send({
-        username: 'root',
-        password: 'secret',
-      })
-      .expect(200)
-    const loggedInToken = loggedInUser.body.token
-
     const newBlog = {
       title: 'Go To Statement Considered Harmful',
       author: 'Edsger W. Dijkstra',
@@ -95,15 +86,6 @@ describe('addition of a new blog', () => {
   })
     
   test('fails with status code 400 if data invaild', async () => {
-    const loggedInUser = await api
-      .post('/api/login')
-      .send({
-        username: 'root',
-        password: 'secret',
-      })
-      .expect(200)
-    const loggedInToken = loggedInUser.body.token
-
     const newBlog = {
       author: 'Edsger W. Dijkstra',
       likes: 0,
@@ -115,15 +97,31 @@ describe('addition of a new blog', () => {
       .send(newBlog)
       .expect(400)
   })
+
+  test('fails with status code 401 if user is unauthorized', async () => {
+    const newBlog = {
+      title: 'Go To Statement Considered Harmful',
+      author: 'Edsger W. Dijkstra',
+      url: 'http://www.u.arizona.edu/~rubinson/copyright_violations/Go_To_Considered_Harmful.html',
+      likes: 5,
+    }
+  
+    await api
+      .post('/api/blogs')
+      .set('Authorization', 'abc123')
+      .send(newBlog)
+      .expect(401)
+  })
 })
 
 describe('deletion of a blog', () => {
   test('succeeds with status code 204 if id is valid', async () => {
     const blogsAtStart = await helper.blogsInDb()
     const blogToDelete = blogsAtStart[0]
-
+    
     await api
       .delete(`/api/blogs/${blogToDelete.id}`)
+      .set('Authorization', 'bearer '+loggedInToken)
       .expect(204)
 
     const blogsAtEnd = await helper.blogsInDb()
