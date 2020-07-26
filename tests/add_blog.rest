@@ -1,5 +1,6 @@
 POST  http://localhost:3003/api/blogs/
 Content-Type: application/json
+Authorization: bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6IlNoZXBoZXJkIiwiaWQiOiI1ZjFiMGUzNmIxMWM5MzAxZTAyODI4N2QiLCJpYXQiOjE1OTU3NDk1ODd9.ctzNmyBtiKGGdUf2-SCiFolu82FIyEI7cVd3_vHUd14
 
 {
   "title": "Euler Equation",
